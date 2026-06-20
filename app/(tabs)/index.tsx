@@ -8,51 +8,35 @@ import {
   Text,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
-import AsyncStorage from "@react-native-async-storage/async-storage";
-import useTheme, { ColorScheme } from "@/hooks/useTheme";
 
-interface Note {
-  id: string;
-  title: string;
-  completed: boolean;
-}
+import useTheme, { ColorScheme } from "@/hooks/useTheme";
+import { useMutation, useQuery } from "convex/react";
+import { api } from "@/convex/_generated/api";
+import { Id } from "@/convex/_generated/dataModel";
 
 export default function HomeScreen() {
   const { colors } = useTheme();
-
-  const [notes, setNotes] = useState<Note[]>([]);
   const [text, setText] = useState<string>("");
-
   const homeStyles = createStyles(colors);
 
-  useEffect(() => {
-    const loadNotes = async () => {
-      const txt = await AsyncStorage.getItem("notes");
-      if (txt) setNotes(JSON.parse(txt));
-    };
-    loadNotes();
-  }, []);
-
-  useEffect(() => {
-    const saveNotes = async () => {
-      await AsyncStorage.setItem("notes", JSON.stringify(notes));
-    };
-    saveNotes();
-  }, [notes]);
+  const createNote = useMutation(api.notes.createNote);
+  const notes = useQuery(api.notes.getNotes);
+  const deleteNote = useMutation(api.notes.deleteNote);
 
   const handleAddNote = async () => {
     if (!text.trim()) return;
-    const newNote: Note = {
-      id: Date.now().toString(36),
+    const newNote = {
       title: text,
       completed: false,
     };
-    setNotes([newNote, ...notes]);
+
+    await createNote(newNote);
+
     setText("");
   };
 
-  const handleRemoveNote = (id: string) => {
-    setNotes(notes.filter((note) => note.id !== id));
+  const handleRemoveNote = (id: Id<"notes">) => {
+    deleteNote({ id });
   };
 
   return (
@@ -98,7 +82,7 @@ export default function HomeScreen() {
       <FlatList
         showsVerticalScrollIndicator={false}
         data={notes}
-        keyExtractor={(item) => item.id.toString()}
+        keyExtractor={(item) => item._id}
         renderItem={({ item }) => (
           <View style={homeStyles.todoItemWrapper}>
             <View style={homeStyles.todoItem}>
@@ -119,7 +103,7 @@ export default function HomeScreen() {
                 <View style={homeStyles.todoActions}>
                   <TouchableOpacity
                     onPress={() => {
-                      handleRemoveNote(item.id);
+                      handleRemoveNote(item._id);
                     }}
                     activeOpacity={0.8}
                   >
