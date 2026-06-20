@@ -1,8 +1,6 @@
-import { FlatList, View, TouchableOpacity, Text } from "react-native";
+import { FlatList, View } from "react-native";
 
-import { Ionicons } from "@expo/vector-icons";
-import { useMutation, useQuery } from "convex/react";
-import { Id } from "@/convex/_generated/dataModel";
+import { useQuery } from "convex/react";
 import { api } from "@/convex/_generated/api";
 
 import useTheme from "@/hooks/useTheme";

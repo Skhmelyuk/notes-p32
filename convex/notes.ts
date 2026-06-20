@@ -43,6 +43,22 @@ export const deleteNote = mutation({
   },
 });
 
+export const updateNote = mutation({
+  args: {
+    id: v.id("notes"),
+    title: v.string(),
+  },
+  handler: async (ctx, args) => {
+    const note = await ctx.db.get(args.id);
+    if (!note) {
+      throw new ConvexError("Note not found");
+    }
+    return await ctx.db.patch(args.id, {
+      title: args.title,
+    });
+  },
+});
+
 export const clearAllNotes = mutation({
   args: {},
   handler: async (ctx) => {
