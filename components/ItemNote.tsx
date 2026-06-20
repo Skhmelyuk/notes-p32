@@ -11,9 +11,15 @@ interface ItemNoteProps {
   id: Id<"notes">;
   title: string;
   completed: boolean;
+  onStartEdit?: () => void;
 }
 
-export const ItemNote = ({ id, title, completed }: ItemNoteProps) => {
+export const ItemNote = ({
+  id,
+  title,
+  completed,
+  onStartEdit,
+}: ItemNoteProps) => {
   const { colors } = useTheme();
   const styles = createStyles(colors);
 
@@ -38,6 +44,7 @@ export const ItemNote = ({ id, title, completed }: ItemNoteProps) => {
   const handleStartEdit = () => {
     setEditText(title);
     setIsEditing(true);
+    onStartEdit?.();
   };
 
   return (
