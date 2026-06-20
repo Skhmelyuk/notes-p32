@@ -1,4 +1,4 @@
-import { v } from "convex/values";
+import { ConvexError, v } from "convex/values";
 import { mutation, query } from "./_generated/server";
 
 export const getNotes = query({
@@ -16,6 +16,21 @@ export const createNote = mutation({
       completed: args.completed,
     });
     return newNote;
+  },
+});
+
+export const toggleNote = mutation({
+  args: {
+    id: v.id("notes"),
+  },
+  handler: async (ctx, args) => {
+    const note = await ctx.db.get(args.id);
+    if (!note) {
+      throw new ConvexError("Note not found");
+    }
+    return await ctx.db.patch(args.id, {
+      completed: !note.completed,
+    });
   },
 });
 
