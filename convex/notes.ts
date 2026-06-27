@@ -1,19 +1,32 @@
-import { ConvexError, v } from "convex/values";
-import { mutation, query } from "./_generated/server";
+import { query, mutation } from "./_generated/server";
+import { v, ConvexError } from "convex/values";
+import { getAuthUserId } from "@convex-dev/auth/server";
 
 export const getNotes = query({
   args: {},
   handler: async (ctx) => {
-    return await ctx.db.query("notes").collect();
+    const userId = await getAuthUserId(ctx);
+    if (userId === null) {
+      return [];
+    }
+    return await ctx.db
+      .query("notes")
+      .withIndex("by_user", (q) => q.eq("userId", userId))
+      .collect();
   },
 });
 
 export const createNote = mutation({
   args: { title: v.string(), completed: v.boolean() },
   handler: async (ctx, args) => {
+    const userId = await getAuthUserId(ctx);
+    if (userId === null) {
+      throw new ConvexError("Not authenticated");
+    }
     const newNote = await ctx.db.insert("notes", {
       title: args.title,
       completed: args.completed,
+      userId,
     });
     return newNote;
   },
@@ -24,9 +37,16 @@ export const toggleNote = mutation({
     id: v.id("notes"),
   },
   handler: async (ctx, args) => {
+    const userId = await getAuthUserId(ctx);
+    if (userId === null) {
+      throw new ConvexError("Not authenticated");
+    }
     const note = await ctx.db.get(args.id);
     if (!note) {
       throw new ConvexError("Note not found");
+    }
+    if (note.userId !== userId) {
+      throw new ConvexError("Not authorized");
     }
     return await ctx.db.patch(args.id, {
       completed: !note.completed,
@@ -39,30 +59,32 @@ export const deleteNote = mutation({
     id: v.id("notes"),
   },
   handler: async (ctx, args) => {
-    return await ctx.db.delete(args.id);
-  },
-});
-
-export const updateNote = mutation({
-  args: {
-    id: v.id("notes"),
-    title: v.string(),
-  },
-  handler: async (ctx, args) => {
+    const userId = await getAuthUserId(ctx);
+    if (userId === null) {
+      throw new ConvexError("Not authenticated");
+    }
     const note = await ctx.db.get(args.id);
     if (!note) {
       throw new ConvexError("Note not found");
     }
-    return await ctx.db.patch(args.id, {
-      title: args.title,
-    });
+    if (note.userId !== userId) {
+      throw new ConvexError("Not authorized");
+    }
+    return await ctx.db.delete(args.id);
   },
 });
 
 export const clearAllNotes = mutation({
   args: {},
   handler: async (ctx) => {
-    const notes = await ctx.db.query("notes").collect();
+    const userId = await getAuthUserId(ctx);
+    if (userId === null) {
+      throw new ConvexError("Not authenticated");
+    }
+    const notes = await ctx.db
+      .query("notes")
+      .withIndex("by_user", (q) => q.eq("userId", userId))
+      .collect();
     for (const note of notes) {
       await ctx.db.delete(note._id);
     }

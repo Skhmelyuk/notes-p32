@@ -206,4 +206,16 @@ export const createStyles = (colors: ColorScheme) =>
       paddingVertical: 6,
       marginBottom: 16,
     },
+    logoutButton: {
+      padding: 12,
+      borderRadius: 20,
+      backgroundColor: colors.dangerLight,
+      flexDirection: "row",
+      alignItems: "center",
+      gap: 12,
+    },
+    logoutText: {
+      fontSize: 16,
+      fontWeight: "600",
+    },
   });

@@ -1,10 +1,21 @@
 import useTheme, { type ColorScheme } from "@/hooks/useTheme";
-import Ionicons from "@expo/vector-icons/Ionicons";
-import { View, Text, StyleSheet, ScrollView, Switch } from "react-native";
+import { useAuthActions } from "@convex-dev/auth/react";
+import { Ionicons } from "@expo/vector-icons";
+import { useRouter } from "expo-router";
+import {
+  View,
+  Text,
+  StyleSheet,
+  ScrollView,
+  Switch,
+  TouchableOpacity,
+} from "react-native";
 
 export default function SettingsScreen() {
   const { colors, isDarkMode, toggleDarkMode } = useTheme();
   const styles = createStyles(colors);
+  const { signOut } = useAuthActions();
+  const router = useRouter();
 
   return (
     <View style={styles.container}>
@@ -16,6 +27,18 @@ export default function SettingsScreen() {
           </View>
           <Text style={styles.title}>Settings</Text>
         </View>
+        <TouchableOpacity
+          style={styles.logoutButton}
+          onPress={async () => {
+            await signOut();
+            router.replace("/sign-in");
+          }}
+        >
+          <Ionicons name="log-out-outline" size={24} color={colors.error} />
+          <Text style={[styles.logoutText, { color: colors.error }]}>
+            Logout
+          </Text>
+        </TouchableOpacity>
       </View>
 
       <ScrollView
@@ -58,6 +81,8 @@ const createStyles = (colors: ColorScheme) => {
       paddingHorizontal: 24,
       paddingVertical: 32,
       paddingBottom: 24,
+      flexDirection: "row",
+      justifyContent: "space-between",
     },
     titleContainer: {
       flexDirection: "row",
@@ -128,6 +153,18 @@ const createStyles = (colors: ColorScheme) => {
       fontSize: 16,
       fontWeight: "600",
       color: colors.text,
+    },
+    logoutButton: {
+      padding: 12,
+      borderRadius: 20,
+      backgroundColor: colors.dangerLight,
+      flexDirection: "row",
+      alignItems: "center",
+      gap: 12,
+    },
+    logoutText: {
+      fontSize: 16,
+      fontWeight: "600",
     },
   });
 };
